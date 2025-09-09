@@ -6,4 +6,3 @@ namespace FactServerBlazor.Data;
 public class ApplicationUser : IdentityUser
 {
 }
-

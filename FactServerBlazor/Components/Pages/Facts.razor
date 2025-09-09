@@ -1,5 +1,6 @@
 ﻿@page "/uselessfacts"
-@inject IHttpClientFactory ClientFactory
+@inject HttpClient Http
+@rendermode InteractiveServer
 
 <PageTitle>Random Useless Facts</PageTitle>
 
@@ -27,10 +28,8 @@ else
     {
         try
         {
-            var client = ClientFactory.CreateClient();
             var url = "https://uselessfacts.jsph.pl/random.json";
-
-            var response = await client.GetFromJsonAsync<UselessFact>(url);
+            var response = await Http.GetFromJsonAsync<UselessFact>(url);
 
             if (response != null)
             {
