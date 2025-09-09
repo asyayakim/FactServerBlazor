@@ -1,23 +1,31 @@
 ﻿@page "/uselessfacts"
+@using FactServerBlazor.Components.Config
 @inject HttpClient Http
 @rendermode InteractiveServer
+@inject Microsoft.Extensions.Options.IOptions<CloudflareAi> CloudflareConfig
 
 <PageTitle>Random Useless Facts</PageTitle>
 
 <h1>Random Useless Facts</h1>
 
-@if (fact == null)
+@if (_fact == null)
 {
     <p><em>Loading...</em></p>
 }
 else
 {
-    <p>@fact</p>
-    <button class="btn btn-primary" @onclick="LoadFact">Get Another Fact</button>
+    <p>@_fact</p>
+    @if (!string.IsNullOrEmpty(_image))
+    {
+        <img src="data:image/png;base64,@_image" alt="Generated image" style="max-width:400px;" />
+
+    }
+    <button class="btn btn-primary" @onclick="LoadFact" style="margin-top: 15px;">Get Another Fact</button>
 }
 
 @code {
-    private string? fact;
+    private string? _fact;
+    private string? _image;
 
     protected override async Task OnInitializedAsync()
     {
@@ -28,17 +36,35 @@ else
     {
         try
         {
-            var url = "https://uselessfacts.jsph.pl/random.json";
-            var response = await Http.GetFromJsonAsync<UselessFact>(url);
+            var urlFact = "https://uselessfacts.jsph.pl/random.json";
+            var factResponse = await Http.GetFromJsonAsync<UselessFact>(urlFact);
 
-            if (response != null)
+            if (factResponse != null)
             {
-                fact = response.Text;
+                _fact = factResponse.Text;
+                var requestBody = new { prompt = _fact };
+                var accountId = CloudflareConfig.Value.AccountId;
+                var apiToken = CloudflareConfig.Value.ApiToken;
+                using var request = new HttpRequestMessage(
+                    HttpMethod.Post,
+                    $"https://api.cloudflare.com/client/v4/accounts/{accountId}/ai/run/@cf/lykon/dreamshaper-8-lcm")
+                {
+                    Content = JsonContent.Create(requestBody)
+                }; 
+                request.Headers.Authorization =
+                    new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", apiToken);
+
+                var response = await Http.SendAsync(request);
+                response.EnsureSuccessStatusCode();
+
+                var bytes = await response.Content.ReadAsByteArrayAsync();
+                _image = Convert.ToBase64String(bytes);
             }
         }
         catch (Exception ex)
         {
-            fact = $"Could not load fact: {ex.Message}";
+            _fact = $"Could not load fact: {ex.Message}";
+            _image = null;
         }
     }
 
@@ -47,4 +73,5 @@ else
         public string Id { get; set; } = string.Empty;
         public string Text { get; set; } = string.Empty;
     }
+
 }

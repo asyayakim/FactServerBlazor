@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using FactServerBlazor.Components;
 using FactServerBlazor.Components.Account;
+using FactServerBlazor.Components.Config;
 using FactServerBlazor.Data;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -37,6 +38,9 @@ builder.Services.AddIdentityCore<ApplicationUser>(options => options.SignIn.Requ
     .AddDefaultTokenProviders();
 
 builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
+
+builder.Services.Configure<CloudflareAi>(
+    builder.Configuration.GetSection("CloudflareAI"));
 
 
 
