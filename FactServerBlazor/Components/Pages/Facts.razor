@@ -1,14 +1,13 @@
 ﻿@page "/uselessfacts"
-@using FactServerBlazor.Components.Config
-@inject HttpClient Http
+@using FactServerBlazor.Components.Services
 @rendermode InteractiveServer
-@inject Microsoft.Extensions.Options.IOptions<CloudflareAi> CloudflareConfig
+@inject FactServer FactServer
 
 <PageTitle>Random Useless Facts</PageTitle>
 
 <h1>Random Useless Facts</h1>
 
-@if (_fact == null)
+@if (_fact == null && _image== null)
 {
     <p><em>Loading...</em></p>
 }
@@ -18,7 +17,6 @@ else
     @if (!string.IsNullOrEmpty(_image))
     {
         <img src="data:image/png;base64,@_image" alt="Generated image" style="max-width:400px;" />
-
     }
     <button class="btn btn-primary" @onclick="LoadFact" style="margin-top: 15px;">Get Another Fact</button>
 }
@@ -36,29 +34,11 @@ else
     {
         try
         {
-            var urlFact = "https://uselessfacts.jsph.pl/random.json";
-            var factResponse = await Http.GetFromJsonAsync<UselessFact>(urlFact);
-
-            if (factResponse != null)
+            _fact = await FactServer.GetRandomFact();
+            Console.WriteLine(_fact);
+            if (_fact != string.Empty)
             {
-                _fact = factResponse.Text;
-                var requestBody = new { prompt = _fact };
-                var accountId = CloudflareConfig.Value.AccountId;
-                var apiToken = CloudflareConfig.Value.ApiToken;
-                using var request = new HttpRequestMessage(
-                    HttpMethod.Post,
-                    $"https://api.cloudflare.com/client/v4/accounts/{accountId}/ai/run/@cf/lykon/dreamshaper-8-lcm")
-                {
-                    Content = JsonContent.Create(requestBody)
-                }; 
-                request.Headers.Authorization =
-                    new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", apiToken);
-
-                var response = await Http.SendAsync(request);
-                response.EnsureSuccessStatusCode();
-
-                var bytes = await response.Content.ReadAsByteArrayAsync();
-                _image = Convert.ToBase64String(bytes);
+              _image = await FactServer.GetImageServer(_fact);
             }
         }
         catch (Exception ex)
@@ -67,11 +47,4 @@ else
             _image = null;
         }
     }
-
-    private class UselessFact
-    {
-        public string Id { get; set; } = string.Empty;
-        public string Text { get; set; } = string.Empty;
-    }
-
 }

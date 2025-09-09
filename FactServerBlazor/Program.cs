@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using FactServerBlazor.Components;
 using FactServerBlazor.Components.Account;
 using FactServerBlazor.Components.Config;
+using FactServerBlazor.Components.Services;
 using FactServerBlazor.Data;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -17,7 +18,7 @@ builder.Services.AddCascadingAuthenticationState();
 builder.Services.AddScoped<IdentityUserAccessor>();
 builder.Services.AddScoped<IdentityRedirectManager>();
 builder.Services.AddScoped<AuthenticationStateProvider, IdentityRevalidatingAuthenticationStateProvider>();
-
+builder.Services.AddScoped<FactServer>();
 builder.Services.AddAuthentication(options =>
     {
         options.DefaultScheme = IdentityConstants.ApplicationScheme;
@@ -41,8 +42,6 @@ builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSe
 
 builder.Services.Configure<CloudflareAi>(
     builder.Configuration.GetSection("CloudflareAI"));
-
-
 
 var app = builder.Build();
 
