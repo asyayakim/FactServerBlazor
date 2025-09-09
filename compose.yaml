@@ -1,0 +1,7 @@
+﻿services:
+  factserverblazor:
+    image: factserverblazor
+    build:
+      context: .
+      dockerfile: FactServerBlazor/Dockerfile
+
