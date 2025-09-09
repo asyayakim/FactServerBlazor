@@ -1,0 +1,51 @@
+﻿@page "/uselessfacts"
+@inject IHttpClientFactory ClientFactory
+
+<PageTitle>Random Useless Facts</PageTitle>
+
+<h1>Random Useless Facts</h1>
+
+@if (fact == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <p>@fact</p>
+    <button class="btn btn-primary" @onclick="LoadFact">Get Another Fact</button>
+}
+
+@code {
+    private string? fact;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadFact();
+    }
+
+    private async Task LoadFact()
+    {
+        try
+        {
+            var client = ClientFactory.CreateClient();
+            var url = "https://uselessfacts.jsph.pl/random.json";
+
+            var response = await client.GetFromJsonAsync<UselessFact>(url);
+
+            if (response != null)
+            {
+                fact = response.Text;
+            }
+        }
+        catch (Exception ex)
+        {
+            fact = $"Could not load fact: {ex.Message}";
+        }
+    }
+
+    private class UselessFact
+    {
+        public string Id { get; set; } = string.Empty;
+        public string Text { get; set; } = string.Empty;
+    }
+}
